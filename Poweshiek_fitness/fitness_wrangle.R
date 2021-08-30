@@ -13,23 +13,23 @@ library(tidyverse)
 
 # Setup ----
 # Change to appropriate workspace
-setwd("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinators/
-      Poweshiek_Dakota_Garita_Skippers/R projects/Poweshiek Fitness")
+setwd(paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinators/",
+      "Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival"))
 
 # Load data
-egg_batches2018 <- read.csv('egg_batches2018.csv', header=T)
-weekly_check2018 <- read.csv('weekly_check2018.csv')
-weekly_check2019 <- read.csv('weekly_check2019.csv')
-weekly_check2020 <- read.csv('weekly_check2020.csv')
-egg_collection2018 <- read.csv('egg_collection2018.csv')
-egg_collection2019 <- read.csv('egg_collection2019.csv')
-egg_collection2020 <- read.csv('egg_collection2020.csv')
-pupa_check2019 <- read.csv('pupa_check2019.csv')
-pupa_check2018 <- read.csv('pupa_check2018.csv')
-pupa_check2020 <- read.csv('pupa_check2020.csv')
-larva_measurement2020 <- read.csv('larva_measurement2020.csv')
-larva_measurement2019 <- read.csv('larva_measurement2019.csv')
-larva_measurement2018 <- read.csv('larva_measurement2018.csv')
+egg_batches2018 <- read.csv('./Raw_data/egg_batches2018.csv', header=T)
+weekly_check2018 <- read.csv('./Raw_data/weekly_check2018.csv')
+weekly_check2019 <- read.csv('./Raw_data/weekly_check2019.csv')
+weekly_check2020 <- read.csv('./Raw_data/weekly_check2020.csv')
+egg_collection2018 <- read.csv('./Raw_data/egg_collection2018.csv')
+egg_collection2019 <- read.csv('./Raw_data/egg_collection2019.csv')
+egg_collection2020 <- read.csv('./Raw_data/egg_collection2020.csv')
+pupa_check2019 <- read.csv('./Raw_data/pupa_check2019.csv')
+pupa_check2018 <- read.csv('./Raw_data/pupa_check2018.csv')
+pupa_check2020 <- read.csv('./Raw_data/pupa_check2020.csv')
+larva_measurement2020 <- read.csv('./Raw_data/larva_measurement2020.csv')
+larva_measurement2019 <- read.csv('./Raw_data/larva_measurement2019.csv')
+larva_measurement2018 <- read.csv('./Raw_data/larva_measurement2018.csv')
 
 # Functions ----
 
@@ -122,5 +122,5 @@ all_survival <- left_join((bind_rows(survival2018, survival2019, survival2020)),
 
 # Export it as a csv. to aviod rerunning this code whenever you want to do analysis
 write.csv(all_survival, paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/",
-"Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Poweshiek Fitness/all_survival"), 
+"Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Poweshiek_fitness/all_survival"), 
 row.names = FALSE)

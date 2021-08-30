@@ -12,7 +12,7 @@ library(tidyverse)
 # Setup ----
 # Change to appropriate workspace
 setwd(paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/",
-             "Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Poweshiek Fitness"))
+             "Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Poweshiek_fitness"))
 
 # Load in data
 all_survival <- read.csv('all_survival.csv')
