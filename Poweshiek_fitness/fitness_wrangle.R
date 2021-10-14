@@ -17,19 +17,22 @@ setwd(paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinat
       "Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival"))
 
 # Load data
-egg_batches2018 <- read.csv('./Raw_data/egg_batches2018.csv', header=T)
+egg_batches2018 <- read.csv('./Raw_data/egg_batches2018.csv', header = T)
 weekly_check2018 <- read.csv('./Raw_data/weekly_check2018.csv')
 weekly_check2019 <- read.csv('./Raw_data/weekly_check2019.csv')
 weekly_check2020 <- read.csv('./Raw_data/weekly_check2020.csv')
+weekly_check2021 <- read.csv('./Raw_data/weekly_check2021.csv')
 egg_collection2018 <- read.csv('./Raw_data/egg_collection2018.csv')
 egg_collection2019 <- read.csv('./Raw_data/egg_collection2019.csv')
 egg_collection2020 <- read.csv('./Raw_data/egg_collection2020.csv')
+egg_collection2021 <- read.csv('./Raw_data/egg_collection2021.csv')
 pupa_check2019 <- read.csv('./Raw_data/pupa_check2019.csv')
 pupa_check2018 <- read.csv('./Raw_data/pupa_check2018.csv')
 pupa_check2020 <- read.csv('./Raw_data/pupa_check2020.csv')
 larva_measurement2020 <- read.csv('./Raw_data/larva_measurement2020.csv')
 larva_measurement2019 <- read.csv('./Raw_data/larva_measurement2019.csv')
 larva_measurement2018 <- read.csv('./Raw_data/larva_measurement2018.csv')
+
 
 # Functions ----
 
@@ -50,7 +53,7 @@ survival <- function (weekly_data, measurement_data, years_var, first_year,
           (ifelse(final_week == 'A', 1, 0)))) %>% # did it die between diapasue and adulthood
     mutate(survival_after_diapause = ifelse(week_of_diapause == 'A', 1, 0)) %>% # did it exit diapause
     mutate(survival_to_adult = ifelse(final_week == 'A', 1, 0)) %>% # did it survive to adult
-    select(ID, year, maternal_ID, Site, survival_to_diapause:survival_to_adult) %>%
+    select(ID, year, maternal_ID, Site, egg_batch_ID, survival_to_diapause:survival_to_adult) %>%
   left_join(mass_wide, by = 'ID', suffix = c(".x", ".y"))
 }
 
@@ -83,13 +86,19 @@ weekly_survival2018 <- inner_join(weekly_check2018, egg_batches2018,
 
 weekly_survival2019 <- inner_join(weekly_check2019, egg_collection2019, 
                                  by = 'egg_batch_ID', suffix = c(".x", ".y")) %>% 
-  select(ID, maternal_ID, Site, X22.Jul:Adult) %>%
+  select(ID, maternal_ID, Site, egg_batch_ID, X22.Jul:Adult) %>%
   mutate(year = 2019)
   
 weekly_survival2020 <- inner_join(weekly_check2020, egg_collection2020, 
                                  by = 'maternal_ID', suffix = c(".x", ".y")) %>% 
-  select(ID, maternal_ID, Site, X13.Jul:Adult) %>%
-  mutate(year = 2020)
+  rename(c('Eggbatch' = 'egg_batch_ID')) %>%
+  select(ID, maternal_ID, Site, egg_batch_ID, X13.Jul:Adult) %>%
+  mutate(year = 2020) 
+
+weekly_survival2021 <- inner_join(weekly_check2021, egg_collection2021, 
+                                  by = 'egg_batch_ID', suffix = c("", ".y")) %>% 
+  select(ID, maternal_ID, Site, egg_batch_ID, X11.Oct:X18.Oct) %>%
+  mutate(year = 2021)
 
 # Run the survial function for each year 
 survival2018 <- survival(weekly_data = weekly_survival2018, measurement_data = 
@@ -110,6 +119,12 @@ survival2020 <- survival(weekly_data = weekly_survival2020, measurement_data =
                         week_after_diapause = weekly_survival2020$X26.Apr, 
                         final_week = weekly_survival2020$Adult)
 
+survival2021 <- survival(weekly_data = weekly_survival2021, measurement_data = 
+                           larva_measurement2020, first_year = 2021, 
+                         week_of_diapause = weekly_survival2020$X05.Oct, 
+                         week_after_diapause = weekly_survival2020$X26.Apr, 
+                         final_week = weekly_survival2020$Adult)
+
 # Run the pupa time function for each year
 pupa_time2019 <- pupa.time(pupa_check2019, "O", "R", "B")  
 pupa_time2018 <- pupa.time(pupa_check2018, "O", "R", "B")
@@ -120,7 +135,8 @@ all_survival <- left_join((bind_rows(survival2018, survival2019, survival2020)),
                           (bind_rows(pupa_time2018, pupa_time2019, pupa_time2020)), 
                           by = c('ID'), suffix = c(".x", ".y"))
 
-# Export it as a csv. to aviod rerunning this code whenever you want to do analysis
+# Export it as a csv. to aviod rerunning this code to do analysis
 write.csv(all_survival, paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/",
 "Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Poweshiek_fitness/all_survival"), 
 row.names = FALSE)
+
