@@ -32,6 +32,7 @@ pupa_check2020 <- read.csv('./Raw_data/pupa_check2020.csv')
 larva_measurement2020 <- read.csv('./Raw_data/larva_measurement2020.csv')
 larva_measurement2019 <- read.csv('./Raw_data/larva_measurement2019.csv')
 larva_measurement2018 <- read.csv('./Raw_data/larva_measurement2018.csv')
+larva_measurement2021 <- read.csv('./Raw_data/larva_measurement2021.csv')
 
 
 # Functions ----
@@ -81,7 +82,7 @@ weekly_check2019$egg_batch_ID <- substr(weekly_check2019$"ID",0, 6)
 weekly_survival2018 <- inner_join(weekly_check2018, egg_batches2018, 
                                  by = 'egg_batch_ID', suffix = c(".x", ".y")) %>%
   inner_join(egg_collection2018, by = 'maternal_ID', suffix = c(".x", ".y")) %>%
-  select(ID, maternal_ID, Site, X09.Jul:X08.Jul) %>%
+  select(ID, maternal_ID, Site, egg_batch_ID, X09.Jul:X08.Jul) %>%
   mutate(year = 2018)
 
 weekly_survival2019 <- inner_join(weekly_check2019, egg_collection2019, 
@@ -91,13 +92,13 @@ weekly_survival2019 <- inner_join(weekly_check2019, egg_collection2019,
   
 weekly_survival2020 <- inner_join(weekly_check2020, egg_collection2020, 
                                  by = 'maternal_ID', suffix = c(".x", ".y")) %>% 
-  rename(c('Eggbatch' = 'egg_batch_ID')) %>%
+  rename(c('egg_batch_ID' = 'Eggbatch')) %>%
   select(ID, maternal_ID, Site, egg_batch_ID, X13.Jul:Adult) %>%
   mutate(year = 2020) 
 
 weekly_survival2021 <- inner_join(weekly_check2021, egg_collection2021, 
                                   by = 'egg_batch_ID', suffix = c("", ".y")) %>% 
-  select(ID, maternal_ID, Site, egg_batch_ID, X11.Oct:X18.Oct) %>%
+  select(ID, maternal_ID, Site, egg_batch_ID, X11.Oct:X25.Oct) %>%
   mutate(year = 2021)
 
 # Run the survial function for each year 
@@ -120,10 +121,10 @@ survival2020 <- survival(weekly_data = weekly_survival2020, measurement_data =
                         final_week = weekly_survival2020$Adult)
 
 survival2021 <- survival(weekly_data = weekly_survival2021, measurement_data = 
-                           larva_measurement2020, first_year = 2021, 
-                         week_of_diapause = weekly_survival2020$X05.Oct, 
-                         week_after_diapause = weekly_survival2020$X26.Apr, 
-                         final_week = weekly_survival2020$Adult)
+                           larva_measurement2021, first_year = 2021, 
+                         week_of_diapause = weekly_survival2021$X11.Oct, 
+                         week_after_diapause = weekly_survival2021$X18.Oct, 
+                         final_week = weekly_survival2021$X18.Oct)
 
 # Run the pupa time function for each year
 pupa_time2019 <- pupa.time(pupa_check2019, "O", "R", "B")  
@@ -131,12 +132,12 @@ pupa_time2018 <- pupa.time(pupa_check2018, "O", "R", "B")
 pupa_time2020 <- pupa.time(pupa_check2020, "O", "R", "B", "Field")
 
 # Bind all of the data together
-all_survival <- left_join((bind_rows(survival2018, survival2019, survival2020)),
+all_survival <- left_join((bind_rows(survival2018, survival2019, survival2020, survival2021)),
                           (bind_rows(pupa_time2018, pupa_time2019, pupa_time2020)), 
                           by = c('ID'), suffix = c(".x", ".y"))
 
 # Export it as a csv. to aviod rerunning this code to do analysis
 write.csv(all_survival, paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/",
-"Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Poweshiek_fitness/all_survival"), 
+"Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Poweshiek_fitness/all_survival.csv"), 
 row.names = FALSE)
 
