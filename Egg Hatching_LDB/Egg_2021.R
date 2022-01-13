@@ -82,12 +82,15 @@ ggplot(female_summary, aes(x = percent_hatched, y = method, color = method)) +
 # Summarizing Sites -------------------------------------------------------
 
 site_summary <- female_hatch_summary %>%
-  group_by(maternal_lineage, year) %>%
-  summarise(percent_hatched = mean(percent_hatched)) %>%
-  mutate("siteID" = paste(year, maternal_lineage))
+  mutate("site_ID" = ifelse(method == 'wild', maternal_lineage, 'captive')) %>%
+  filter(total_eggs != 1) %>%
+  filter(total_larvae != 0) %>%
+  group_by(site_ID, year) %>%
+  summarise(percent_hatched = mean(percent_hatched))
 
-ggplot(site_summary, aes(siteID, percent_hatched, fill = maternal_lineage)) +
-  geom_col()
+ggplot(site_summary, aes(year, percent_hatched, fill = site_ID)) +
+  geom_col(position = 'dodge') +
+  
 
 
 # Time series -------------------------------------------------------------
@@ -104,30 +107,37 @@ egg_output <- egg_batches %>%
 
 p2 <- ggplot(egg_output, aes(x = maternal_ID, fill = maternal_ID)) +
   stat_summary(geom = "bar", aes(y = total_eggs)) +
-  scale_color_manual(values = cbPalette) + 
-  theme_classic()       
+  scale_fill_manual(values = c("P1900210" = "#56B4E9", "P1900807" = "#009E73", "P1901002" = "#F0E442", "P200903" = "#0072B2", "P202409" = "#CC79A7", "P203301" = "#D55E00")) + 
+  xlab("Maternal ID") +
+  ylab("Total eggs laid") +
+  theme_classic() + 
+  theme(legend.position = "none") +
+  theme(plot.background = element_rect(
+    fill = "white",
+    colour = "black",
+    size = 1
+  )) +
+  theme(axis.text.x = element_text(size = 11, angle = 45, hjust= 1))+
+  ylim(0,150)
                      
   
-png("captive_time_series.png", units = 'in', width = 7, height = 4, res = 600)
+png("captive_time_series.png", units = 'in', width = 9, height = 5, res = 600)
 ggplot(egg_output, aes(days_after_mate, cumulative_proportion, color = maternal_ID, shape = maternal_ID)) +
   geom_point(size = 2) +
   geom_line(alpha = 0.3, size = 1.3) +
   theme_bw(base_size = 14) +
   theme(panel.grid.minor.x = element_blank()) +
-  theme(legend.position = c(0.9, 0.8)) +
+  theme(legend.position = c(0.9, 0.65)) +
   theme(legend.background = element_rect(size = 0.5, linetype = "solid", colour = "black")) +
   guides(colour = guide_legend(title = "Maternal ID")) +
   guides(shape = guide_legend(title = "Maternal ID")) +
   xlab("Days after mating") +
-  ylab("Proprotion of total eggs layed") +
+  ylab("Proprotion of total eggs laid") +
   scale_x_continuous(n.breaks = 17) +
   ylim(0,1) +
-  scale_color_manual(values = cbPalette) +
-  annotation_custom(ggplotGrob(p2), xmin = 10, xmax = 15, 
-                    ymin = 0.2, ymax = 0.6, legend = FALSE)
-  
-  
-
+  scale_colour_manual(values = c("P1900210" = "#56B4E9", "P1900807" = "#009E73", "P1901002" = "#F0E442", "P200903" = "#0072B2", "P202409" = "#CC79A7", "P203301" = "#D55E00")) +
+  annotation_custom(ggplotGrob(p2), xmin = 7, xmax = 14.5, 
+                    ymin = 0.0, ymax = 0.5)
 dev.off()
 
 # Hatch rate and survival as a function of date layed ----
