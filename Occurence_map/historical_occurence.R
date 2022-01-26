@@ -4,6 +4,7 @@
 # Adam Grottoli
 # Email: grottoli4@gmail.com
 
+<<<<<<< HEAD
 # Description: Wrangling of data to be used for Powesheik occurence in ArcGIS storymap
 
 # Data from Environment and Climate change Canada and from Belitz M, Hendrick L, 
@@ -15,12 +16,16 @@
 # Any records from Belitz paper with the state as the highest resoltion location 
 # were removed. Records without a lat/long location were assigned a location based 
 # on the centroid of the highest resolution location avalailble. (i.e., county) 
+=======
+# Description: Analysis and visualization of poweshiek survival and fitness data
+>>>>>>> f6e8b72f85e07cd855d15a11112a2089e9de61dc
 
 # Libraries ----
 library(tidyverse)
 
 # Setup ----
 # Change to appropriate workspace
+<<<<<<< HEAD
 setwd(paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinators/",
              "Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Occurence_map"))
 
@@ -44,3 +49,7 @@ posk_occ_simp$date <- paste0("01/", posk_occ_simp$year)
 write.csv(posk_occ_simp, paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/",
 "Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival/Occurence_map/posk_occurrence.csv"), 
           row.names = FALSE)
+=======
+setwd("U:/Storymap/Habitat/Occurence_map")
+
+>>>>>>> f6e8b72f85e07cd855d15a11112a2089e9de61dc
