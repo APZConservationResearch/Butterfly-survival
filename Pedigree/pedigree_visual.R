@@ -13,6 +13,6 @@ library(kinship2)
 setwd("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinators/Poweshiek_Dakota_Garita_Skippers/R projects/Butterfly-survival")
 
 # Pedigree ----
-data <- read.csv("Raw_data/pedigree.csv")
+data <- read.csv("Raw_data/POSK_pedigree.csv")
 pedAll <- pedigree(id = data$id, dadid = data$father, momid = data$mother, sex = data$sex) 
 plot <- plot.pedigree(pedAll)
