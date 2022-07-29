@@ -85,7 +85,7 @@ survival <- function (adult_data, measurement_data, date_diapause_start, cohort,
     ungroup() %>%
     mutate(survival_to_diapause = ifelse(Status %in% "A", 1, 0)) %>%
     filter(date_in >= as.Date(date_diapause_start)) %>% 
-    mutate(pre_length = Length, pre_mass = Mass, plant = PlantHeight)
+    mutate(pre_length = Length, pre_mass = Mass)
              # did it survive through diapause
   
   measures_post <- measurement_data %>%
@@ -103,13 +103,19 @@ survival <- function (adult_data, measurement_data, date_diapause_start, cohort,
            left_join(measures_post, by = 'ID', suffix = c("", ".y"))  %>%
             distinct(ID, .keep_all = TRUE) %>%
            mutate(method = ifelse(Treatment == "tube", "tube", "plant"),
-                  survival_to_diapause = ifelse(is_adult %in% "A", 1, ifelse(is.na(survival_to_diapause), 0, survival_to_diapause)),
-                  survived_diapause = ifelse(is_adult %in% "A", 1, ifelse(survival_to_diapause %in% 0, NA, survived_diapause)),
+                  survival_to_diapause = ifelse(is_adult %in% "A", 1, 
+                                                ifelse(is.na(survival_to_diapause), 
+                                                       0, survival_to_diapause)),
+                  survived_diapause = ifelse(is_adult %in% "A", 1, 
+                                             ifelse(survival_to_diapause %in% 0, 
+                                                    NA, survived_diapause)),
                   survival_diapause_adult = ifelse(survived_diapause %in% 1, 
                                    ifelse(is_adult %in% "A", 1, 0), NA)) %>%  
-    select(ID, maternal_ID, egg_batch_ID, method, survival_to_diapause, survived_diapause, Adult, survival_diapause_adult,
-           pre_mass, post_mass, pre_length, post_length, date_in, date_out, DiapauseChamber, plant) %>%
-    mutate(diapause_days = (date_out - date_in), species = species, cohort = cohort, plant = as.numeric(plant))
+    select(ID, maternal_ID, egg_batch_ID, method, survival_to_diapause, survived_diapause, 
+           Adult, survival_diapause_adult,
+           pre_mass, post_mass, pre_length, post_length, date_in, date_out,
+           DiapauseChamber) %>%
+    mutate(diapause_days = (date_out - date_in), species = species, cohort = cohort)
 }
 
 is.adult <- function (pupa_data, measurement_data, string_1, string_2 = NULL, string_3 = NULL) {
@@ -125,7 +131,8 @@ is.adult <- function (pupa_data, measurement_data, string_1, string_2 = NULL, st
 # Function to count the number of days each individual spent as a pupa
 # Input the different characters as strings used for different stages of pupation 
 
-pupa.time <- function (df, pupa_character1, pupa_character2 = NULL, pupa_character3 = NULL, pupa_character4 = NULL) {
+pupa.time <- function (df, pupa_character1, pupa_character2 = NULL, 
+                       pupa_character3 = NULL, pupa_character4 = NULL) {
   df <- data.frame(lapply(df, function (x)
     replace(x, x %in% c(pupa_character1, pupa_character2, pupa_character3), "P"))) 
   pupa_days <- rowSums(df == "P", na.rm = T)  # Count the number of days as pupa, or "P", per row
@@ -159,7 +166,8 @@ POSK_all2019 <- is.adult(pupa_check2019, larva_measurement2019, string_1 = "A", 
 larva_measurement2020 <- larva_measurement2020 %>%
   rename(c('egg_batch_ID' = 'EggBatch', 'maternal_ID' = 'MaternalID')) %>%
   mutate(DiapauseChamber =  as.character(DiapauseChamber))
-POSK_all2020 <- is.adult(pupa_check2020, larva_measurement2020, string_1 = "Adult", string_2 = "Released") %>%
+POSK_all2020 <- is.adult(pupa_check2020, larva_measurement2020, 
+                         string_1 = "Adult", string_2 = "Released") %>%
   mutate(method = ifelse(Treatment == "Tube", "tube", "plant"))
 
 GASK_larva_measurement2017 <- GASK_larva_measurement2017 %>%
@@ -188,22 +196,25 @@ GASK_all2019 <- is.adult(GASK_pupa_check2019, GASK_larva_measurement2019, string
 #  select(ID, maternal_ID, egg_batch_ID, X11.Oct:X25.Oct) %>%
 #  mutate(year = 2021, method = "")
 
-# Run the survial function for each year 
+# Run the survival function for each year 
 POSK_survival2018 <- survival(adult_data = POSK_all2018, measurement_data = 
                                 larva_measurement2018, cohort = 2018, 
-                              is_adult = POSK_all2018$Adult, date_diapause_start = "2018-09-25", species = "POSK")
+                              is_adult = POSK_all2018$Adult, 
+                              date_diapause_start = "2018-09-25", species = "POSK")
 
 POSK_survival2019 <- survival(adult_data = POSK_all2019, measurement_data =
                               larva_measurement2019, cohort = 2019,
-                              is_adult = POSK_all2019$Adult, date_diapause_start = "2019-10-09", species = "POSK")
+                              is_adult = POSK_all2019$Adult, 
+                              date_diapause_start = "2019-10-09", species = "POSK")
   
 POSK_survival2020 <- survival(adult_data = POSK_all2020, measurement_data =
-                              larva_measurement2020, cohort = 2020, date_diapause_start = "2020-10-14",
+                              larva_measurement2020, cohort = 2020, 
+                              date_diapause_start = "2020-10-14",
                               is_adult = POSK_all2020$Adult, species = "POSK")
 
 #POSK_survival2021 <- survival(weekly_data = weekly_survival2021, measurement_data = 
 #                           larva_measurement2021, cohort = 2021, 
-#                         week_of_diapause = weekly_survival2021$X25.Oct, 
+#                           date_diapause_start = "2021-10-18", 
 #                         week_after_diapause = weekly_survival2021$X25.Oct, 
 #                         is_adult = weekly_survival2021$X25.Oct, species = "POSK")
 
@@ -228,11 +239,11 @@ GASK_pupa_time2019 <- pupa.time(GASK_pupa_check2019, "O", "R", "B")
 
 # Bind all of the data together
 all_survival <- left_join((bind_rows(POSK_survival2018, POSK_survival2019, POSK_survival2020, 
-                                     GASK_survival2018,
+                                     GASK_survival2017, GASK_survival2018,
                                      GASK_survival2019)),
                           (bind_rows(POSK_pupa_time2018, POSK_pupa_time2019, POSK_pupa_time2020, 
                                     GASK_pupa_time2018, GASK_pupa_time2019)), 
                           by = c('ID'), suffix = c(".x", ".y"))
 
-# Export it as a csv. to aviod rerunning this code to do analysis
+# Export it as a csv. to avoid rerunning this code to do analysis
 write.csv(all_survival, "./Overwinter_analysis/overwinter_full_data.csv")
