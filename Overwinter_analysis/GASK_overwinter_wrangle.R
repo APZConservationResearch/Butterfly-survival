@@ -22,28 +22,31 @@ setwd(paste0("P:/Conservation_Research/Restricted/CRD/Research Projects/Pollinat
 # 2018 data ----
 
 skip_master <- read.csv("data/Garita Data Master - 2018 cohort - larva_measurements.csv") %>% 
-  select(Year, Month, Day, ID, Egg_batch, Species, Found, Length, Height, Mass, Status, CurrentLocation, PlantHeight)
+  select(Year, Month, Day, ID, Egg_batch, Species, Found, Length, Height, Mass, 
+         Status, CurrentLocation, PlantHeight)
 
-skip_entire <- read.csv("data/Garita Data Master - 2018 cohort - larva_measurements.csv") 
+skip_master$Month <-  sprintf("%02d", skip_master$Month)
+skip_master$Day <- sprintf("%02d", skip_master$Day)
 
-skip_master$Month = sprintf("%02d", skip_master$Month)
-skip_master$Day = sprintf("%02d", skip_master$Day)
-
-gar_master = skip_master %>% 
+gar_master <- skip_master %>% 
   unite(ymd.date, 1:3, sep = "-", remove = TRUE) %>% 
   mutate(date = as.Date(ymd.date),
          ID=as.character(ID))
-gar_master$ymd.date = as.Date(gar_master$ymd.date, format = "%Y-%m-%d")
+gar_master$ymd.date <- as.Date(gar_master$ymd.date, format = "%Y-%m-%d")
 
-gar_master = gar_master %>% 
-  select(ID, Egg_batch, Species, Found, Height, Length, Mass, Status, PlantHeight, CurrentLocation, date)
+gar_master <- gar_master %>% 
+  group_by(ID) %>% 
+  arrange(date) %>% 
+  mutate(check = row_number()) %>% 
+  ungroup() %>%
+  select(ID, Egg_batch, Species, Found, Height, Length, Mass, Status, PlantHeight,
+         CurrentLocation, date, check)
 
-
-last_check = gar_master %>%
+last_check <- gar_master %>%
   group_by(ID) %>% 
   filter(date == max(date)) %>% 
   ungroup() %>% 
-  mutate(outcome=ifelse(Status=="A", 1,0))
+  mutate(outcome=ifelse(Status == "A", 1, 0))
 
 # n.eggs = gar_master %>% 
 # select(ID) %>% 
@@ -53,80 +56,71 @@ last_check = gar_master %>%
 # n.eggs have 405 IDs 
 # doesn't make last_check number of individuals... 
 
-gar_master = gar_master %>% 
-  group_by(ID) %>% 
-  arrange(date) %>% 
-  mutate(check=row_number()) %>% 
-  ungroup()
 
 # pre diapause #
-pre_diapause = gar_master %>% 
+pre_diapause <- gar_master %>% 
   filter(date <= as.Date("2018-12-01")) %>% 
   group_by(ID) %>% 
   filter(date == max(date)) %>% 
   ungroup() %>% 
   select(ID, Length, Status, CurrentLocation, date, check, Mass) %>% 
   filter(!is.na(Length)) %>% 
-  mutate(pre.length = Length) %>% 
-  select(-Length)
+  mutate(pre_length = Length) %>% 
+  select(-Length) %>% 
+  filter(date >= as.Date("2018-09-20"))
 
-pre_diapause = pre_diapause %>% 
-  filter(date >= as.Date("2018-09-20")) 
 
-pre.ID = c(pre_diapause$ID)
+pre.ID <- c(pre_diapause$ID)
 
 # post diapause # 
-post_diapause = gar_master %>% 
+post_diapause <- gar_master %>% 
   filter(date >= as.Date("2018-12-01"),
-         ID %in% pre.ID)
-
-post_diapause = post_diapause %>%
+         ID %in% pre.ID) %>%
   group_by(ID) %>% 
   filter(date == min(date)) %>% 
   ungroup() %>% 
-  mutate(outcome=ifelse(Status=="A", 1,0))
+  mutate(outcome = ifelse(Status == "A", 1,0))
 
 # join pre and post # 
-GASK_post_diap = post_diapause %>% 
+GASK_post_diap <- post_diapause %>% 
   select(ID, date, outcome)
 
-GASK_diapause = pre_diapause %>% 
+GASK_diapause <- pre_diapause %>% 
   left_join(GASK_post_diap, by = "ID")
 
 colnames(GASK_diapause)[4] = "date_in"
 colnames(GASK_diapause)[8] = "date_out"
 
 
-# Adding in treatment location --------------------------------------------
+# Adding in treatment location ----
 
-CurrentLocation = c("Incubator plant","Incubator Plant", "Overwinter outside")
-treatment = c("plant_in", "plant_in", "plant_out")
+CurrentLocation <- c("Incubator plant", "Incubator Plant", "Overwinter outside")
+treatment <- c("plant_in", "plant_in", "plant_out")
 
-treatment_type = data.frame(CurrentLocation, treatment)
+treatment_type <- data.frame(CurrentLocation, treatment)
 
-GASK_diapause_0523 = GASK_diapause %>% 
+GASK_complete_2018 <- GASK_diapause %>% 
   left_join(treatment_type, by = "CurrentLocation") 
 
-GASK_diapause_0523$treatment = as.character(GASK_diapause_0523$treatment)
-GASK_diapause_0523$treatment = ifelse(is.na(GASK_diapause_0523$treatment), "cup_in", 
-                                      GASK_diapause_0523$treatment)  
+GASK_complete_2018$treatment <- as.character(GASK_complete_2018$treatment)
+GASK_complete_2018$treatment <- ifelse(is.na(GASK_complete_2018$treatment), "cup_in", 
+                                       GASK_complete_2018$treatment)  
 
-GASK_complete = GASK_diapause_0523 %>%
-  filter(!is.na(date_out))
-
-GASK_complete = GASK_complete %>% 
+GASK_complete_2018 <- GASK_complete_2018 %>%
+  filter(!is.na(date_out)) %>% 
   mutate(diapause_days = (date_out - date_in))
 
-write.csv(GASK_complete, file = "data/garita 2018 survival.csv")
+
+write.csv(GASK_complete_2018, file = "data/garita 2018 survival.csv")
 
 
 
 # Finding data errors -----------------------------------------------------
 
-GASK_unk = GASK_diapause %>% 
+GASK_unk <- GASK_diapause %>% 
   filter(is.na(date_out))
 
-test = gar_master %>% 
+test <- gar_master %>% 
   filter(date >= as.Date("2018-12-01")) %>%
   group_by(ID) %>% 
   filter(date == min(date)) %>% 
@@ -134,7 +128,7 @@ test = gar_master %>%
 
 find_unk = test %>% 
   left_join(pre_diapause) %>% 
-  filter(check==1)
+  filter(check == 1)
 
 find_id = find_unk %>% 
   select(ID)
@@ -142,124 +136,101 @@ find_id = find_unk %>%
 
 # 2017 data ---------------------------------------------------------------
 
-gask_2017 = read.csv("data/Garita - 2017 Generation - Larval Measurements - Main Data.csv") %>%
-  select(Date, ID, Lineage, Found, LarvaLength, Mass, Status, CurrentLocation)
-
-gask_2017$Date = as.Date(gask_2017$Date, format = "%d/%m/%Y")
-
-gask_2017 = gask_2017 %>%
-  mutate(ID=as.character(ID))
-
-last_17 = gask_2017 %>% 
-  group_by(ID) %>% 
-  filter(Date == max(Date)) %>% 
-  ungroup() %>% 
-  mutate(outcome=ifelse(Status=="A", 1,0))
-
-gask_2017 = gask_2017 %>% 
+GASK_2017 <-read.csv("data/Garita - 2017 Generation - Larval Measurements - Main Data.csv") %>%
+  select(Date, ID, Lineage, Found, LarvaLength, Mass, Status, CurrentLocation) %>%
+  mutate(Date = as.Date(Date, format = "%d/%m/%Y")) %>%
+  mutate(ID = as.character(ID)) %>% 
   group_by(ID) %>% 
   arrange(Date) %>% 
-  mutate(check=row_number()) %>% 
+  mutate(check = row_number()) %>% 
   ungroup()
 
-pre.diap_17 = gask_2017 %>% 
+GASK_diapause_17 <-  GASK_2017 %>% 
   filter(Date <= as.Date("2017-12-01")) %>% 
   group_by(ID) %>% 
   filter(Date == max(Date)) %>% 
   ungroup() %>% 
   select(ID, LarvaLength, Status, CurrentLocation, Date, check, Mass) %>% 
   filter(!is.na(LarvaLength)) %>% 
-  mutate(pre.length = LarvaLength) %>% 
-  select(-LarvaLength)
+  mutate(pre_length = LarvaLength) %>% 
+  select(-LarvaLength) %>% 
+  filter(Date >= as.Date("2017-10-01"))
 
-pre.diap_17 = pre.diap_17 %>% 
-  filter(Date >= as.Date("2017-10-01")) 
+pre_ID_17 <- c(GASK_diapause_17$ID)
 
-pre.ID.17 = c(pre.diap_17$ID)
-
-post.diap_17 = gask_2017 %>% 
+post_diap_17 <- GASK_2017 %>% 
   filter(Date >= as.Date("2017-12-01"),
-         ID %in% pre.ID.17)
-
-post.diap_17 = post.diap_17 %>%
+         ID %in% pre_ID_17) %>%
   group_by(ID) %>% 
   filter(Date == min(Date)) %>% 
   ungroup() %>% 
-  mutate(outcome=ifelse(Status=="A", 1,0))
-
-GASK_post_diap.17 = post.diap_17 %>% 
+  mutate(outcome = ifelse(Status == "A", 1, 0)) %>% 
   select(ID, Date, outcome)
 
-GASK.2017 = pre.diap_17 %>% 
-  left_join(GASK_post_diap.17, by = "ID") %>% 
+GASK_complete_2017 = GASK_diapause_17 %>% 
+  left_join(post_diap_17, by = "ID") %>% 
   rename(date_in = Date.x ,
          date_out = Date.y) %>% 
   mutate(CurrentLocation = as.character(CurrentLocation)) %>% 
-  filter(Status == "A")
+  filter(Status == "A") %>% 
+  mutate(treatment = ifelse(CurrentLocation == "Outside Overwinter", "plant_out", "cup_in")) %>% 
+  filter(pre_length != "") %>%
+  mutate(pre_length = as.numeric(pre_length),
+         diapause_days = (date_out - date_in))
 
-GASK.2017 = GASK.2017 %>% 
-  mutate(treatment = ifelse(CurrentLocation=="Outside Overwinter", "plant_out", "cup_in")) %>% 
-  filter(pre.length != "") %>%
-  mutate(pre.length = as.character(pre.length))
 
-GASK.2017$pre.length = as.numeric(GASK.2017$pre.length)
-
-GASK.2017 = GASK.2017 %>% 
-  mutate(diapause_days = (date_out - date_in))
 
 # plant_out = GASK.2017 %>% 
 # filter(treatment == "plant_out") %>% 
 # mutate(indiv_loc = row_number(CurrentLocation))
 
 
-write.csv(GASK.2017, file = "data/garita 2017 survival.csv")
+write.csv(GASK_complete_2017, file = "data/garita 2017 survival.csv")
+
+# Complete data set 2017 + 2018 ----
+
+GASK_complete_2018 <- GASK_complete_2018 %>% 
+  mutate(year = "2018")
+
+GASK_complete_2017 <- GASK_complete_2017 %>% 
+  mutate(year = "2017")
+
+all_GASK <- GASK_complete_2018 %>% 
+  rbind(GASK_complete_2017)
+
+write.csv(all_GASK, file = "data/all garita survival.csv")
 
 #Create location identification --------------------------------------------------
 # creating location identification to be used as random variable in model
 # for each plant or cup an individual(s) was on for diapause
-plant_in = all.GASK %>% 
+plant_in <- all_GASK %>% 
   filter(treatment == "plant_in") %>% 
   mutate(indiv_loc = (row_number(CurrentLocation)))
 
-plant_in$indiv_loc = sub("^", "plant_in_", plant_in$indiv_loc)
+plant_in$indiv_loc <- sub("^", "plant_in_", plant_in$indiv_loc)
 
-plant_out = all.GASK %>% 
+plant_out = all_GASK %>% 
   filter(treatment == "plant_out") %>% 
   mutate(indiv_loc = (row_number(CurrentLocation)))
 
-plant_out$indiv_loc = sub("^", "plant_out_", plant_out$indiv_loc)
+plant_out$indiv_loc <- sub("^", "plant_out_", plant_out$indiv_loc)
 
-cup_in = all.GASK %>% 
+cup_in <- all_GASK %>% 
   filter(treatment == "cup_in") %>% 
   mutate(indiv_loc = CurrentLocation)
 
-all.GASK = cup_in %>% 
-  rbind(plant_out)
+all_GASK <- cup_in %>% 
+  rbind(plant_out) %>% 
+  rbind(plant_in) %>%
+  mutate(species = "GASK")
 
-all.GASK = all.GASK %>% 
-  rbind(plant_in)
-
-all.mass.GASK = all.GASK %>%
+all_mass_GASK <- all_GASK %>%
   filter(!is.na(Mass),
          Mass < 0.07)
 
-all.GASK.cup = all.GASK %>% 
+all_GASK_cup <- all_GASK %>% 
   filter(treatment == "cup_in",
          Mass < 0.07)
-
-
-# Complete data set 2017 + 2018 -------------------------------------------
-
-GASK_complete = GASK_complete %>% 
-  mutate(year = "2018")
-
-GASK.2017 = GASK.2017 %>% 
-  mutate(year = "2017")
-
-all.GASK = GASK_complete %>% 
-  rbind(GASK.2017)
-
-write.csv(all.GASK, file = "data/all garita survival.csv")
 
 
 # Data addition: 2018 egg batch --------------------------------------------------------
