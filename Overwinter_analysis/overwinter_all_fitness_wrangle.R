@@ -70,7 +70,6 @@ GASK_pupa_check2018 <- read.csv('./Raw_data/GASK_pupa_check2018.csv')
 
 GASK_pupa_check2019 <- read.csv('./Raw_data/GASK_pupa_check2019.csv')
 
-add_data
 
 # Functions ----
 
