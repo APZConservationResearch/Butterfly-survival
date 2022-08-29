@@ -70,6 +70,16 @@ GASK_pupa_check2018 <- read.csv('./Raw_data/GASK_pupa_check2018.csv')
 
 GASK_pupa_check2019 <- read.csv('./Raw_data/GASK_pupa_check2019.csv')
 
+DASK_egg_batches2021 <- read.csv('./Raw_data/DASK_egg_batches2021')
+
+DASK_weekly_check2021 <- read.csv('./Raw_data/DASK_weekly_check2021')
+
+DASK_egg_collection2021 <- read.csv('./Raw_data/DASK_egg_collection2021')
+
+DASK_pupa_check2021 <- read.csv('./Raw_data/DASK_egg_batches2021.csv')
+
+DASK_larva_measurement2021 <- read.csv('./Raw_data/DASK_larva_measurement2021')
+
 
 # Functions ----
 
