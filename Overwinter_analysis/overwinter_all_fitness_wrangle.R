@@ -70,15 +70,13 @@ GASK_pupa_check2018 <- read.csv('./Raw_data/GASK_pupa_check2018.csv')
 
 GASK_pupa_check2019 <- read.csv('./Raw_data/GASK_pupa_check2019.csv')
 
-DASK_egg_batches2021 <- read.csv('./Raw_data/DASK_egg_batches2021')
+DASK_weekly_check2021 <- read.csv('./Raw_data/DASK_weekly_check2021.csv')
 
-DASK_weekly_check2021 <- read.csv('./Raw_data/DASK_weekly_check2021')
+DASK_egg_collection2021 <- read.csv('./Raw_data/DASK_egg_collection2021.csv')
 
-DASK_egg_collection2021 <- read.csv('./Raw_data/DASK_egg_collection2021')
+DASK_pupa_check2021 <- read.csv('./Raw_data/DASK_pupa_check2021.csv')
 
-DASK_pupa_check2021 <- read.csv('./Raw_data/DASK_egg_batches2021.csv')
-
-DASK_larva_measurement2021 <- read.csv('./Raw_data/DASK_larva_measurement2021')
+DASK_larva_measurement2021 <- read.csv('./Raw_data/DASK_larva_measurement2021.csv')
 
 # Functions ----
 
@@ -124,7 +122,8 @@ survival <- function (adult_data, measurement_data, date_diapause_start, cohort,
            Adult, survival_diapause_adult,
            pre_mass, post_mass, pre_length, post_length, date_in, date_out,
            DiapauseChamber) %>%
-    mutate(diapause_days = (date_out - date_in), species = species, cohort = cohort)
+    mutate(diapause_days = (date_out - date_in), species = species, cohort = cohort, 
+           DiapauseChamber =  as.character(DiapauseChamber))
 }
 
 is.adult <- function (pupa_data, measurement_data, string_1, string_2 = NULL, string_3 = NULL) {
@@ -171,7 +170,7 @@ larva_measurement2019 <- larva_measurement2019 %>%
   mutate(Treatment = "", DiapauseChamber =  as.character(DiapauseChamber)) %>%
   inner_join(egg_collection2019, by = 'egg_batch_ID', suffix = c(".x", ".y"))
 POSK_all2019 <- is.adult(pupa_check2019, larva_measurement2019, string_1 = "A", string_2 = "F")
- 
+
 larva_measurement2020 <- larva_measurement2020 %>%
   rename(c('egg_batch_ID' = 'EggBatch', 'maternal_ID' = 'MaternalID')) %>%
   mutate(DiapauseChamber =  as.character(DiapauseChamber))
@@ -200,12 +199,19 @@ GASK_larva_measurement2019 <- GASK_larva_measurement2019 %>%
   mutate(DiapauseChamber =  as.character(DiapauseChamber), Treatment = "")
 GASK_all2019 <- is.adult(GASK_pupa_check2019, GASK_larva_measurement2019, string_1 = "A")
 
+DASK_larva_measurement2021 <- DASK_larva_measurement2021 %>%
+  rename(c('egg_batch_ID' = 'EggBatch')) %>%
+  inner_join(DASK_egg_collection2021, by = 'egg_batch_ID', suffix = c(".x", ".y")) %>%
+  mutate(DiapauseChamber =  as.character(DiapauseChamber))
+DASK_all2021 <- is.adult(DASK_pupa_check2021, DASK_larva_measurement2021, string_1 = "Adult")
+
 #weekly_survival2021 <- inner_join(weekly_check2021, egg_collection2021, 
 #                                  by = 'egg_batch_ID', suffix = c("", ".y")) %>% 
 #  select(ID, maternal_ID, egg_batch_ID, X11.Oct:X25.Oct) %>%
 #  mutate(year = 2021, method = "")
 
 # Run the survival function for each year 
+
 POSK_survival2018 <- survival(adult_data = POSK_all2018, measurement_data = 
                                 larva_measurement2018, cohort = 2018, 
                               is_adult = POSK_all2018$Adult, 
@@ -239,20 +245,28 @@ GASK_survival2019 <- survival(adult_data = GASK_all2019, measurement_data =
                               GASK_larva_measurement2019, cohort = 2019, 
                               is_adult = GASK_all2019$Adult, date_diapause_start = "2019-10-16", species = "GASK")
 
+DASK_survival2021 <- survival(adult_data = DASK_all2021, measurement_data = 
+                                DASK_larva_measurement2021, cohort = 2021, 
+                              is_adult = DASK_all2021$Adult, date_diapause_start = "2021-10-25", species = "DASK")
+
 # Run the pupa time function for each year
 POSK_pupa_time2019 <- pupa.time(pupa_check2019, "O", "R", "B")  
 POSK_pupa_time2018 <- pupa.time(pupa_check2018, "O", "R", "B")
 POSK_pupa_time2020 <- pupa.time(pupa_check2020, "O", "R", "B", "Field")
 GASK_pupa_time2018 <- pupa.time(GASK_pupa_check2018, "O", "R", "B")
 GASK_pupa_time2019 <- pupa.time(GASK_pupa_check2019, "O", "R", "B")
+DASK_pupa_time2021 <- pupa.time(DASK_pupa_check2021, "P", "B")
 
 # Bind all of the data together
 all_survival <- left_join((bind_rows(POSK_survival2018, POSK_survival2019, POSK_survival2020, 
                                      GASK_survival2017, GASK_survival2018,
-                                     GASK_survival2019)),
+                                     GASK_survival2019, DASK_survival2021)),
                           (bind_rows(POSK_pupa_time2018, POSK_pupa_time2019, POSK_pupa_time2020, 
-                                    GASK_pupa_time2018, GASK_pupa_time2019)), 
+                                     GASK_pupa_time2018, GASK_pupa_time2019,
+                                     DASK_pupa_time2021)), 
                           by = c('ID'), suffix = c(".x", ".y"))
 
+
 # Export it as a csv. to avoid rerunning this code to do analysis
-write.csv(all_survival, "./Overwinter_analysis/overwinter_full_data.csv")
+write.csv(all_survival, "./Overwinter_analysis/overwinter_full_data_KM.csv")
+
